@@ -61,6 +61,11 @@ uint8_t writeRegister(uint8_t address, uint8_t data0, uint8_t data1){
 }
 
 void setup() {
+  // init pins
+  digitalWrite(RST_PIN, HIGH);
+  digitalWrite(LCH_PIN, HIGH);
+  digitalWrite(SS_PIN, HIGH);
+
   // set up serial
   Serial.begin(9600);
 
@@ -82,11 +87,33 @@ void setup() {
   delay(50);
 
   // clear reset
-  writeRegister(DAC0 | 0x15, 0x20, 0x00); // write 0xFCBA to key register
+  writeRegister(DAC0 | 0x15, 0x20, 0x00); 
   delay(50);
 
+  // enable internal buffers and set range (0xA: 4mA to 20mA, 0x1 = 0V to 10V)
+  writeRegister(DAC0 | 0x06, 0x00, 0x1A); 
+  delay(50);
+
+  //write zero scale to dac
+  writeRegister(DAC0 | 0x01, 0x00, 0x00); 
+  delay(50);
+
+  // latch outputs
+  digitalWrite(LCH_PIN, LOW);
+  delay(50);
+  digitalWrite(LCH_PIN, HIGH);
+
+  // enable DAC output
+  writeRegister(DAC0 | 0x06, 0x00, 0x30); 
+  delay(50);
 }
 
 void loop() {
-
+  // continuously change the output
+  for(int i=0; i<16; i++){
+    writeRegister(DAC0 | 0x01, i*0x10, 0x00); 
+    digitalWrite(LCH_PIN, LOW);
+    delay(50);
+    digitalWrite(LCH_PIN, HIGH);
+  }
 }
