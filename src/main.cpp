@@ -3,7 +3,12 @@
 #include <SPI.h>
 
 #define SS_PIN 10
+#define RST_PIN 9
+#define LCH_PIN 8
 #define SPI_FREQ 1000000
+
+#define DAC0 0b10000000
+#define DAC1 0b10100000
 
 // continously checks both 1 voltage channel or current channel
 // by changing VOLTAGE to 1, a Vin0 will be selected
@@ -33,19 +38,22 @@ uint8_t CalculateCRC(uint8_t data[]){
 	return crc;
 }
 
-uint8_t writeRegister(uint8_t data[]){
+uint8_t writeRegister(uint8_t address, uint8_t data0, uint8_t data1){
   // start SPI
-  SPI.beginTransaction(SPISettings(SPI_FREQ, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SPI_FREQ, MSBFIRST, SPI_MODE1));
 
   // toggle SS pin
   digitalWrite(SS_PIN, HIGH);
   delay(100);
   digitalWrite(SS_PIN, LOW);
 
-  for(int i = 0; i<3 ; i++){
-    data[i] = SPI.transfer(data[i]); // then, write data to register
-  }
-    
+  // write data
+  SPI.transfer(address);   
+  SPI.transfer(data0);
+  SPI.transfer(data1);
+  uint8_t temp[] = {address, data0, data1};
+  SPI.transfer(CalculateCRC(temp));
+
   digitalWrite(SS_PIN, HIGH); // disable SS
   SPI.endTransaction(); // end SPI com
 
@@ -62,6 +70,21 @@ void setup() {
   /* 
     set up DAC
   */ 
+
+  // reset DACs
+  digitalWrite(RST_PIN, HIGH);
+  delay(50);
+  digitalWrite(RST_PIN, LOW);
+  delay(50);
+
+  // calibration memory refresh
+  writeRegister(DAC0 | 0x08, 0xFC, 0xBA); // write 0xFCBA to key register
+  delay(50);
+
+  // clear reset
+  writeRegister(DAC0 | 0x15, 0x20, 0x00); // write 0xFCBA to key register
+  delay(50);
+
 }
 
 void loop() {
