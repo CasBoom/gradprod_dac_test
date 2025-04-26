@@ -5,7 +5,7 @@
 #define SS_PIN 10
 #define RST_PIN 9
 #define LCH_PIN 8
-#define SPI_FREQ 1000000
+#define SPI_FREQ 10000
 
 #define DAC0 0b10000000
 #define DAC1 0b10100000
@@ -62,6 +62,9 @@ uint8_t writeRegister(uint8_t address, uint8_t data0, uint8_t data1){
 
 void setup() {
   // init pins
+  pinMode(RST_PIN, OUTPUT);
+  pinMode(LCH_PIN, OUTPUT);
+  pinMode(SS_PIN, OUTPUT);
   digitalWrite(RST_PIN, HIGH);
   digitalWrite(LCH_PIN, HIGH);
   digitalWrite(SS_PIN, HIGH);
@@ -115,5 +118,6 @@ void loop() {
     digitalWrite(LCH_PIN, LOW);
     delay(50);
     digitalWrite(LCH_PIN, HIGH);
+    delay(100);
   }
 }
